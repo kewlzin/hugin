@@ -3,7 +3,7 @@ import asyncio
 from .core.ca import ensure_ca, CA_CERT_PATH, CA_KEY_PATH
 from .core.proxy import ProxyServer
 from .core.bus import EventBus
-from .gui.main import main as gui_main
+
 
 def cmd_ca_init(args):
     cert, key = ensure_ca()
@@ -17,8 +17,9 @@ async def run_proxy(args, bus: EventBus):
 
 def cmd_run(args):
     bus = EventBus()
-    loop = asyncio.get_event_loop()
-    loop.create_task(run_proxy(args, bus))
+    #loop = asyncio.get_event_loop()
+    #loop.create_task(run_proxy(args, bus))
+    from .gui.main import main as gui_main
     gui_main(bus)
 
 def main():

@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QTextEdit, QLabel
+from typing import Optional
 from ..core.flows import Flow
 from ..core.bus import EventBus
 
@@ -18,7 +19,7 @@ class FlowDetail(QWidget):
     def __init__(self, bus: EventBus):
         super().__init__()
         self.bus = bus
-        self._flow: Flow | None = None
+        self._flow: Optional[Flow] = None
 
         tabs = QTabWidget()
         self.req_text = QTextEdit(); self.req_text.setReadOnly(False)

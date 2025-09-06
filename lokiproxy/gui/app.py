@@ -16,9 +16,10 @@ class HuginApp(QMainWindow):
         self.intercept_on = False
 
         # start proxy in background
-        self.proxy = ProxyServer(bus=self.bus)
-        self.bus.proxy = self.proxy
-        asyncio.create_task(self.proxy.serve())
+        #self.proxy = ProxyServer(bus=self.bus)
+        #self.bus.proxy = self.proxy
+        self.proxy = self.bus.proxy
+        #asyncio.create_task(self.proxy.serve())
 
         # UI
         topbar = QHBoxLayout()

@@ -1,5 +1,6 @@
 from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex, Signal, QSortFilterProxyModel
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QTableView
+from typing import Optional
 from ..core.flows import Flow, LRUFlows
 from ..core.bus import EventBus
 
@@ -74,7 +75,7 @@ class FlowsTable(QWidget):
         fid = self.model.flow_at(src.row()).id
         self.selection_changed.emit(fid)
 
-    def current_flow_id(self) -> int | None:
+    def current_flow_id(self) -> Optional[int]:
         idx = self.table.currentIndex()
         if not idx.isValid():
             return None
