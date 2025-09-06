@@ -1,0 +1,9 @@
+rules:
+  - name: "Exemplo: reescrever URL"
+    on: "request"
+    match:
+      url_regex: "example\.com"
+      method: "GET"
+    action:
+      rewrite_url: "http://example.org/"
+    enabled: true

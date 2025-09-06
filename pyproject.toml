@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lokiproxy"
+version = "0.1.0"
+description = "HuginProxy MVP - Local intercepting proxy with Qt GUI"
+authors = [{name="Hugin Proxy"}]
+readme = "lokiproxy/README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "anyio>=4.0.0",
+  "httpx>=0.27.0",
+  "h11>=0.14.0",
+  "PySide6>=6.6.0",
+  "qasync>=0.27.1",
+  "pydantic>=2.7.0",
+  "pyyaml>=6.0.1",
+  "cryptography>=42.0.0",
+  "ruff>=0.6.0",
+  "black>=24.0",
+  "pytest>=8.0.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I"]
