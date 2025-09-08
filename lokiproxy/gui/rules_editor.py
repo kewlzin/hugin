@@ -24,20 +24,31 @@ class RulesEditor(QWidget):
         self.bus = bus
         self.text = QTextEdit()
         self.text.setPlainText(yaml.safe_dump(TEMPLATE, sort_keys=False, allow_unicode=True))
+        self.text.setMaximumHeight(100)  # Limita altura do editor
+        self.text.setPlaceholderText("Regras YAML (clique em Aplicar para ativar)")
 
         btns = QHBoxLayout()
-        btn_load = QPushButton("Carregar YAML")
-        btn_save = QPushButton("Salvar YAML")
+        btn_load = QPushButton("Carregar")
+        btn_save = QPushButton("Salvar")
         btn_apply = QPushButton("Aplicar")
+        btn_clear = QPushButton("Limpar")
+
+        # Botões menores
+        for btn in [btn_load, btn_save, btn_apply, btn_clear]:
+            btn.setMaximumHeight(30)
 
         btn_load.clicked.connect(self.load_yaml)
         btn_save.clicked.connect(self.save_yaml)
         btn_apply.clicked.connect(self.apply_rules)
+        btn_clear.clicked.connect(self.clear_rules)
 
         v = QVBoxLayout(self)
         v.addLayout(btns)
         v.addWidget(self.text)
-        btns.addWidget(btn_load); btns.addWidget(btn_save); btns.addWidget(btn_apply)
+        btns.addWidget(btn_load)
+        btns.addWidget(btn_save)
+        btns.addWidget(btn_apply)
+        btns.addWidget(btn_clear)
 
     def load_yaml(self):
         path, _ = QFileDialog.getOpenFileName(self, "Carregar regras", "", "YAML (*.yaml *.yml)")
@@ -60,3 +71,8 @@ class RulesEditor(QWidget):
             return
         asyncio.create_task(self.bus.send_gui_cmd(APPLY_RULES, {"ruleset": rs.dict()}))
         QMessageBox.information(self, "Regras", "Regras aplicadas.")
+
+    def clear_rules(self):
+        self.text.clear()
+        # Aplicar regras vazias
+        asyncio.create_task(self.bus.send_gui_cmd(APPLY_RULES, {"ruleset": {"rules": []}}))

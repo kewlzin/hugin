@@ -17,7 +17,7 @@ def main(bus=None, host="127.0.0.1", port=8080):
     bus.proxy = proxy
 
     # Agende o servidor no loop do qasync
-    asyncio.create_task(proxy.serve())
+    loop.create_task(proxy.serve())
 
     win = HuginApp(bus=bus)
     win.show()

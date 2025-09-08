@@ -72,8 +72,47 @@ class ProxyServer:
 
             if method.upper() == "CONNECT":
                 host, port = self._split_host(target)
+                
+                # Criar flow para requisições CONNECT também
+                flow = self.flows.new_flow()
+                flow.method = method
+                flow.scheme = "https"
+                flow.host = host
+                flow.port = port
+                flow.path = f"{host}:{port}"
+                flow.request.headers = headers
+                flow.request.body = b""
+                await self.bus.publish_core(FLOW_CREATED, {"id": flow.id})
+                
+                # Intercept CONNECT se necessário
+                if self.intercept:
+                    await self.bus.publish_core(FLOW_PAUSED, {"id": flow.id, "where": "request"})
+                    fut = asyncio.get_event_loop().create_future()
+                    self._pending_forwards[flow.id] = fut
+                    decision = await fut
+                    self._pending_forwards.pop(flow.id, None)
+                    if decision == DROP_FLOW:
+                        flow.error = "Dropped by user at request"
+                        await self.bus.publish_core(FLOW_FINISHED, {"id": flow.id})
+                        writer.close(); await writer.wait_closed(); return
+                    elif decision != FORWARD_FLOW:
+                        # Se não foi forward nem drop, aguarda novamente
+                        await self.bus.publish_core(FLOW_PAUSED, {"id": flow.id, "where": "request"})
+                        fut = asyncio.get_event_loop().create_future()
+                        self._pending_forwards[flow.id] = fut
+                        decision = await fut
+                        self._pending_forwards.pop(flow.id, None)
+                        if decision == DROP_FLOW:
+                            flow.error = "Dropped by user at request"
+                            await self.bus.publish_core(FLOW_FINISHED, {"id": flow.id})
+                            writer.close(); await writer.wait_closed(); return
+                
                 # MVP: simple TCP tunnel (no MITM in this minimal file, see README for scope)
                 await self._tunnel(reader, writer, host, port)
+                
+                # Marcar como finalizado
+                flow.status_code = 200
+                await self.bus.publish_core(FLOW_FINISHED, {"id": flow.id})
                 return
 
             host_header = next((v for (k, v) in headers if k.lower() == "host"), "")
@@ -102,10 +141,21 @@ class ProxyServer:
                 self._pending_forwards[flow.id] = fut
                 decision = await fut
                 self._pending_forwards.pop(flow.id, None)
-                if decision == "Drop":
+                if decision == DROP_FLOW:
                     flow.error = "Dropped by user at request"
                     await self.bus.publish_core(FLOW_FINISHED, {"id": flow.id})
                     writer.close(); await writer.wait_closed(); return
+                elif decision != FORWARD_FLOW:
+                    # Se não foi forward nem drop, aguarda novamente
+                    await self.bus.publish_core(FLOW_PAUSED, {"id": flow.id, "where": "request"})
+                    fut = asyncio.get_event_loop().create_future()
+                    self._pending_forwards[flow.id] = fut
+                    decision = await fut
+                    self._pending_forwards.pop(flow.id, None)
+                    if decision == DROP_FLOW:
+                        flow.error = "Dropped by user at request"
+                        await self.bus.publish_core(FLOW_FINISHED, {"id": flow.id})
+                        writer.close(); await writer.wait_closed(); return
 
             if mocked:
                 resp_status = mocked["status"]
@@ -126,7 +176,7 @@ class ProxyServer:
                 self._pending_forwards[flow.id] = fut
                 decision = await fut
                 self._pending_forwards.pop(flow.id, None)
-                if decision == "Drop":
+                if decision == DROP_FLOW:
                     flow.error = "Dropped by user at response"
                     await self.bus.publish_core(FLOW_FINISHED, {"id": flow.id})
                     writer.close(); await writer.wait_closed(); return

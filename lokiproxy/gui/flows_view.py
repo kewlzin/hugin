@@ -91,3 +91,12 @@ class FlowsTable(QWidget):
                 idx = self.model.index(row, 0)
                 self.table.setCurrentIndex(self.proxy_model.mapFromSource(idx))
                 break
+
+    def scroll_to_bottom(self):
+        """Rola a tabela para o final para mostrar as requisições mais recentes"""
+        if self.model.rowCount() > 0:
+            last_row = self.model.rowCount() - 1
+            last_idx = self.model.index(last_row, 0)
+            proxy_idx = self.proxy_model.mapFromSource(last_idx)
+            self.table.scrollTo(proxy_idx)
+            self.table.setCurrentIndex(proxy_idx)
